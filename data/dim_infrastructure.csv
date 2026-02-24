@@ -1,0 +1,9 @@
+id,status,primary_ip,domain,error_rate,valid_from,valid_to
+INFRA_0001,healthy,10.0.1.100,techmart-electronics.com,0.02,2024-01-01 00:00:00,2024-03-15 00:00:00
+INFRA_0001,degraded,10.0.1.100,techmart-electronics.com,0.35,2024-03-15 00:00:00,2024-03-16 00:00:00
+INFRA_0001,healthy,10.0.1.100,techmart-electronics.com,0.02,2024-03-16 00:00:00,2024-08-22 00:00:00
+INFRA_0001,degraded,10.0.1.100,techmart-electronics.com,0.4,2024-08-22 00:00:00,2024-08-23 00:00:00
+INFRA_0001,healthy,10.0.1.100,techmart-electronics.com,0.02,2024-08-23 00:00:00,2024-11-29 00:00:00
+INFRA_0001,degraded,10.0.1.100,techmart-electronics.com,0.25,2024-11-29 00:00:00,2024-11-30 00:00:00
+INFRA_0001,healthy,10.0.1.100,techmart-electronics.com,0.02,2024-11-30 00:00:00,
+INFRA_0002,healthy,132.129.167.187,garcia.net,0.02,2024-01-01 00:00:00,
