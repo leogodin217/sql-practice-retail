@@ -26,7 +26,7 @@ DBeaver is a free, open-source SQL editor. It is very popular and works well wit
 
 ### Roll Your Own
 
-These exercises were tested on DuckDB and should work. Alternatively, free to import the CSVs into any DBMS you want. Some of the answers might need tweaking to work, but that's a good learning experience. 
+These exercises were tested on DuckDB and should work. Alternatively, feel free to import the CSVs into any DBMS you want. Some of the answers might need tweaking to work, but that's a good learning experience. 
 
 ## Usage
 
@@ -51,9 +51,9 @@ Exercises are in [exercises.md](exercises.md) -- each one includes collapsible h
 
 | Table | Rows | Description |
 |-------|------|-------------|
-| `dim_customer` | ~17K | Customer dimension (SCD-2) |
+| `dim_customer` | ~14K | Customer dimension (SCD-2) |
 | `dim_product` | 203 | Product catalog |
 | `dim_infrastructure` | 8 | System status (SCD-2) |
-| `fact_customer_action` | ~139K | Customer actions (views, carts, purchases) |
+| `fact_customer_action` | ~168K | Customer actions (views, carts, purchases) |
 
-~12,986 distinct customers across a full year (2024). Generated with [Fabulexa](https://github.com/leoguerra97/fabulexa_sim).
+~8,955 distinct customers across nearly three years (Mar 2022 -- Dec 2024). Generated with [Fabulexa](https://github.com/leoguerra97/fabulexa_sim).
