@@ -41,5 +41,7 @@ SELECT
     timestamp::TIMESTAMP AS timestamp,
     customer_id, product_id, action_type,
     action_sequence::INTEGER AS action_sequence,
-    session_id, funnel_stage
+    session_id, funnel_stage,
+    quantity::INTEGER AS quantity,
+    discount_pct::DOUBLE AS discount_pct
 FROM read_csv('data/fact_customer_action.csv', header=true, auto_detect=true);
