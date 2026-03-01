@@ -1,6 +1,6 @@
 # SQL Practice: Retail Analytics
 
-17 SQL exercises using a simulated e-commerce dataset (TechMart Electronics). Exercises are framed as real business questions, progressing in difficulty.
+23 SQL exercises using a simulated e-commerce dataset (TechMart Electronics). Exercises are framed as real business questions, progressing in difficulty.
 
 ## Setup
 
@@ -51,9 +51,9 @@ Exercises are in [exercises.md](exercises.md) -- each one includes collapsible h
 
 | Table | Rows | Description |
 |-------|------|-------------|
-| `dim_customer` | ~14K | Customer dimension (SCD-2) |
+| `dim_customer` | ~13K | Customer dimension (SCD-2) |
 | `dim_product` | 203 | Product catalog |
 | `dim_infrastructure` | 8 | System status (SCD-2) |
-| `fact_customer_action` | ~168K | Customer actions (views, carts, purchases) |
+| `fact_customer_action` | ~246K | Customer actions (views, carts, purchases) |
 
-~8,955 distinct customers across nearly three years (Mar 2022 -- Dec 2024). Generated with [Fabulexa](https://github.com/leoguerra97/fabulexa_sim).
+~8,949 distinct customers across nearly three years (Mar 2022 -- Dec 2024). Generated with [Fabulexa](https://github.com/leoguerra97/fabulexa_sim).
