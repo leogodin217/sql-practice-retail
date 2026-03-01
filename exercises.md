@@ -54,7 +54,7 @@ The CEO is prepping for a board meeting and needs a headcount.
 <details>
 <summary>Solution</summary>
 
-`dim_customer` uses Type-2 SCD -- when a customer's `total_purchases` changes, a new row is created. A naive `COUNT(*)` returns ~13,314 (all historical rows) instead of the real customer count.
+`dim_customer` uses Type-2 SCD -- when a customer's `total_purchases` changes, a new row is created. A naive `COUNT(*)` returns 13,314 (all historical rows) instead of the real customer count.
 
 **Using DISTINCT:**
 
@@ -97,9 +97,9 @@ WHERE total_purchases > 0;
 <details>
 <summary>Discussion</summary>
 
-Both approaches return ~8,949. The first counts every customer who has ever existed. The second counts only the latest version of each. If the CEO wants "how many customers do we have right now," the second is more appropriate.
+Both approaches return 8,949. The first counts every customer who has ever existed. The second counts only the latest version of each. If the CEO wants "how many customers do we have right now," the second is more appropriate.
 
-The key question to ask yourself: "I got ~8,949, but the table has ~13,314 rows. Why?" This leads naturally into SCD-2 concepts. The inflation is modest here because `total_purchases` only changes when a customer completes a purchase, and most customers don't purchase.
+The key question to ask yourself: "I got 8,949, but the table has 13,314 rows. Why?" This leads naturally into SCD-2 concepts. The inflation is modest here because `total_purchases` only changes when a customer completes a purchase, and most customers don't purchase.
 
 But wait, there's more! The real question here is what is a customer? Our customers table includes anyone that ever signed into our site. Some may say that is the definition of a prospect or a lead. Another definition of customer could 
 
@@ -267,7 +267,7 @@ GROUP BY day_type;
 <details>
 <summary>Discussion</summary>
 
-If you reported just totals, consider: there are roughly 2.5x as many weekdays as weekend days. Is a total comparison fair? The data has a weekend surge -- both new arrivals and returning shoppers are more active on Sat/Sun. You should see a clear difference in average daily activity (roughly 45-50% higher on weekends). The behavioral explanation: people have more free time to browse on weekends.
+If you reported just totals, consider: there are roughly 2.5x as many weekdays as weekend days. Is a total comparison fair? The data has a weekend surge -- both new arrivals and returning shoppers are more active on Sat/Sun. You should see a clear difference in average daily activity (about 46% higher on weekends). The behavioral explanation: people have more free time to browse on weekends.
 
 </details>
 
@@ -373,7 +373,7 @@ ORDER BY d.day;
 <details>
 <summary>Discussion</summary>
 
-You might expect a massive Black Friday spike -- especially with 4x ad spend. Instead, Nov 29, 2024 drops to ~0.5x baseline -- well below an average day. Meanwhile, Cyber Monday (Dec 2) surges to ~1.9x. The surrounding days (Nov 30 through early December, 1.3-1.6x) all dramatically outperform Black Friday. Something suppressed the expected spike.
+You might expect a massive Black Friday spike -- especially with 4x ad spend. Instead, Nov 29, 2024 drops to 0.5x baseline -- well below an average day. Meanwhile, Cyber Monday (Dec 2) surges to 1.9x. The surrounding days (Nov 30 through early December, 1.3-1.6x) all dramatically outperform Black Friday. Something suppressed the expected spike.
 
 The dataset covers nearly three years. Compare Nov 29 across years: in 2022 and 2023, Black Friday clearly stands out above its neighboring days. In 2024, it doesn't -- Nov 30 and Dec 1-2 all beat it. The question "why didn't 2024 Black Friday spike like previous years?" is the real analytical challenge -- and it connects to the infrastructure exercise later.
 
@@ -454,9 +454,9 @@ FROM session_actions;
 <details>
 <summary>Discussion</summary>
 
-The first approach answers "of all customers who ever added to cart, how many ever purchased?" It shows only ~9% converted -- meaning ~91% of cart-adding customers never completed a purchase. The VP's concern is very much confirmed.
+The first approach answers "of all customers who ever added to cart, how many ever purchased?" It shows only 9.3% converted -- meaning 90.7% of cart-adding customers never completed a purchase. The VP's concern is very much confirmed.
 
-The second approach looks at individual shopping sessions. Per-session, about ~9% of sessions with a cart add also have a purchase -- similar to the customer-level rate, which tells you that most purchasing happens within a single session rather than across multiple visits.
+The second approach looks at individual shopping sessions. Per-session, 9.1% of sessions with a cart add also have a purchase -- similar to the customer-level rate, which tells you that most purchasing happens within a single session rather than across multiple visits.
 
 Discovering `session_id` and using it for session-level grouping is a sign of strong analytical thinking. The per-session view is especially important here because each shopping session completes quickly -- a customer's entire browse-to-purchase path happens in a single visit.
 
@@ -505,7 +505,7 @@ ORDER BY month;
 <details>
 <summary>Discussion</summary>
 
-The picture is more nuanced than "summer bad." Look at month-over-month growth rates: June consistently shows the weakest growth (often flat or slightly negative MoM), and July decelerates. But August recovers sharply due to back-to-school demand. The summer slowdown is real but short-lived.
+The picture is more nuanced than "summer bad." Look at month-over-month growth rates: June tends to show the weakest growth (flat to slightly negative MoM in 2023 and 2024), and July often decelerates further. But August recovers sharply due to back-to-school demand. The summer slowdown is real but short-lived.
 
 As the great philosopher [Marcel the Shell with Shoes On](https://youtu.be/VF9-sEbqDvU?si=9uLV8gGym08nyJuw&t=162) once said, "Compared to what?". This is the key question. Saying "summer was bad" based on June/July alone is partially right. Noticing that August breaks the pattern shows stronger analytical thinking. With nearly three years of data, you can check whether this pattern repeats each summer -- and it does.
 
@@ -577,9 +577,9 @@ ORDER BY revenue_per_customer DESC;
 <details>
 <summary>Discussion</summary>
 
-Premium customers convert from cart to purchase at ~13% vs. ~6% for budget -- and the difference compounds across the entire journey. The data shows premium at ~1.52 purchases per customer vs. budget at ~0.43 (about 3.5x). But "spend more" depends on definition -- if you measure average item price, the difference is smaller because product selection is popularity-weighted, not segment-weighted.
+Premium customers convert from cart to purchase at 14.8% vs. 6.2% for budget -- and the difference compounds across the entire journey. The data shows premium at 1.52 purchases per customer vs. budget at 0.43 (about 3.5x). But "spend more" depends on definition -- if you measure average item price, the difference is smaller because product selection is popularity-weighted, not segment-weighted.
 
-A basic answer checks one metric. A thorough answer checks several and synthesizes: "Premium buys more often (~1.52 vs ~0.43 purchases per customer), but average item value is similar because product selection isn't segment-driven. The real difference is conversion rate, not basket size."
+A basic answer checks one metric. A thorough answer checks several and synthesizes: "Premium buys more often (1.52 vs 0.43 purchases per customer), but average item value is similar because product selection isn't segment-driven. The real difference is conversion rate, not basket size."
 
 </details>
 
@@ -639,7 +639,7 @@ ORDER BY hour, day_type;
 <details>
 <summary>Discussion</summary>
 
-The data has clear hourly patterns: evening peak (17-21), morning shopping (9-12), and low early-morning activity (6-9). The recommendation matters as much as the query -- a useful answer says something like "Staff heaviest 5-9pm, moderate 9am-noon, skeleton crew before 9am."
+The data has clear hourly patterns: evening peak (17-20), morning shopping (9-11), and low early-morning activity (6-8). The recommendation matters as much as the query -- a useful answer says something like "Staff heaviest 5-8pm, moderate 9-11am, skeleton crew before 9am."
 
 </details>
 
@@ -700,9 +700,9 @@ LIMIT 25;
 <details>
 <summary>Discussion</summary>
 
-The exercise deliberately frames it as "beyond the VIP list." A good first step is to run `SELECT * FROM dim_customer WHERE tier = 'vip'` to see the existing ~56 VIPs -- understanding what exists before building on it. The real task is identifying high-value non-VIP customers.
+The exercise deliberately frames it as "beyond the VIP list." A good first step is to run `SELECT * FROM dim_customer WHERE tier = 'vip'` to see the existing 56 VIPs -- understanding what exists before building on it. The real task is identifying high-value non-VIP customers.
 
-You'll notice that not all VIPs are equally active -- roughly a quarter are repeat purchasers while the rest signed up but never converted. Think of it as a VIP signup program with ~27% conversion. Building a scoring system that combines purchases, visits, and income shows analytical maturity.
+You'll notice that not all VIPs are equally active -- roughly a quarter are repeat purchasers while the rest signed up but never converted. Think of it as a VIP signup program with 27% conversion. Building a scoring system that combines purchases, visits, and income shows analytical maturity.
 
 </details>
 
@@ -753,7 +753,7 @@ ORDER BY purchases_per_customer DESC;
 <details>
 <summary>Discussion</summary>
 
-Customers are distributed across channels (roughly 40% organic, 30% paid_search, 20% social, 10% referral) with no behavioral difference by channel. A thorough answer recognizes: "There's no meaningful difference -- acquisition source doesn't affect behavior." That's a valid and important finding. In real life, this means the marketing team shouldn't assume paid search is worse (or better) without additional data like cost per acquisition.
+Customers are distributed across channels (40% organic, 30% paid_search, 20% social, 10% referral) with no behavioral difference by channel. A thorough answer recognizes: "There's no meaningful difference -- acquisition source doesn't affect behavior." That's a valid and important finding. In real life, this means the marketing team shouldn't assume paid search is worse (or better) without additional data like cost per acquisition.
 
 </details>
 
@@ -811,7 +811,7 @@ ORDER BY segment;
 <details>
 <summary>Discussion</summary>
 
-About ~80% of customers view products, and nearly all of them add to cart. The biggest drop-off is from cart to purchase: only ~6% of budget cart-adders purchase vs. ~15% of premium. So the answer is layered: "Most customers browse and nearly all add to cart, but the conversion from cart to purchase is where segments diverge dramatically. Premium converts at about 2.4x the budget rate."
+About 80-83% of customers view products, and nearly all of them add to cart. The biggest drop-off is from cart to purchase: only 6.2% of budget cart-adders purchase vs. 14.8% of premium. So the answer is layered: "Most customers browse and nearly all add to cart, but the conversion from cart to purchase is where segments diverge dramatically. Premium converts at about 2.4x the budget rate."
 
 Computing an overall view-to-purchase ratio gives you a number. Building a funnel by action type AND breaking it down by segment gives you an actionable insight. Ask yourself: "If you could only fix one part of the funnel, which step and which segment would you target?"
 
@@ -878,8 +878,8 @@ ORDER BY
 
 The 3-day sale period average looks underwhelming -- virtually no lift in daily cart adds compared to the week before or after. But the averaged result hides a massive confounder. Look day by day:
 
-- **March 15 (sale day 1):** Only ~48 total actions -- a catastrophic drop from the ~297/day baseline. An infrastructure outage (INFRA_0001 went degraded) fires on the same day. The outage blocks re-entry for all returning customers, so only new arrivals generate sessions. This single day drags the 3-day average down well below baseline.
-- **March 16-17 (sale days 2-3):** Infrastructure recovers and activity surges (~423 and ~454 actions). Any sale effect is hard to disentangle from the natural weekend recovery and pent-up demand.
+- **March 15 (sale day 1):** Only 48 total actions -- a catastrophic drop from the 297/day baseline. An infrastructure outage (INFRA_0001 went degraded) fires on the same day. The outage blocks re-entry for all returning customers, so only new arrivals generate sessions. This single day drags the 3-day average down well below baseline.
+- **March 16-17 (sale days 2-3):** Infrastructure recovers and activity surges (423 and 454 actions). Any sale effect is hard to disentangle from the natural weekend recovery and pent-up demand.
 
 The key lesson isn't whether the sale "worked" -- it's that **you can't evaluate a 3-day promotion when 1/3 of it was wiped out by a system outage**. Averaging all three days gives a misleading "the sale barely worked." Looking day by day reveals that the outage is the dominant signal, not the sale.
 
@@ -1084,7 +1084,7 @@ WHERE d.day BETWEEN '2024-11-25' AND '2024-12-07'
 ORDER BY d.day;
 ```
 
-Nov 29 drops to ~0.5x baseline -- well below average despite 4x ad spend. Meanwhile, the days after (Nov 30 through Dec 2) surge to 1.4-1.9x. Cyber Monday (Dec 2) hits ~1.9x. With 4x the normal ad budget, Black Friday should have been one of the biggest days of the year -- instead it was suppressed well below normal.
+Nov 29 drops to 0.5x baseline -- well below average despite 4x ad spend. Meanwhile, the days after (Nov 30 through Dec 2) surge to 1.4-1.9x. Cyber Monday (Dec 2) hits 1.9x. With 4x the normal ad budget, Black Friday should have been one of the biggest days of the year -- instead it was suppressed well below normal.
 
 **Step 2: Discover the infrastructure table**
 
@@ -1108,7 +1108,7 @@ WHERE id = 'INFRA_0001'
 ORDER BY valid_from;
 ```
 
-INFRA_0001 went `degraded` on exactly 2024-11-29 (error_rate 0.25) and recovered on 2024-11-30. The timing matches perfectly -- the outage ate the expected Black Friday boost. Compare to the March outage (error_rate 0.35, activity dropped to ~18% of prior day) and August outage (error_rate 0.4, dropped to ~26%). The Black Friday outage was less severe (0.25 error rate), retaining ~56% of prior day's activity, but still significantly suppressed what should have been a blockbuster day.
+INFRA_0001 went `degraded` on exactly 2024-11-29 (error_rate 0.25) and recovered on 2024-11-30. The timing matches perfectly -- the outage ate the expected Black Friday boost. Compare to the March outage (error_rate 0.35, activity dropped to 17.5% of prior day) and August outage (error_rate 0.4, dropped to 25.7%). The Black Friday outage was less severe (0.25 error rate), retaining 55.8% of prior day's activity, but still significantly suppressed what should have been a blockbuster day.
 
 **Step 4 (thorough answer): Quantify all outage impacts**
 
@@ -1147,7 +1147,7 @@ This exercise teaches root cause analysis. The business question is "what went w
 
 The dataset spans three years, so you can compare Black Friday across years. In 2022 and 2023, Nov 29 clearly stands out above its neighboring days -- it's the local peak. In 2024, it doesn't stand out at all -- Nov 30 and Dec 1-2 all surpass it. The cross-year comparison is stronger evidence than just looking at baseline multiples, because it controls for the holiday season effect.
 
-The step-4 query reveals an interesting pattern across the three outages: March (error_rate 0.35) crashed activity to ~18% of prior day, August (error_rate 0.4) to ~26%, and November (error_rate 0.25) to ~56%. The lower error rate correlated with less suppression. Even so, the November outage dragged Black Friday well below baseline (~0.5x) despite 4x ad spend -- muting a potential blockbuster day into a below-average one.
+The step-4 query reveals an interesting pattern across the three outages: March (error_rate 0.35) crashed activity to 17.5% of prior day, August (error_rate 0.4) to 25.7%, and November (error_rate 0.25) to 55.8%. The lower error rate correlated with less suppression. Even so, the November outage dragged Black Friday well below baseline (0.5x) despite 4x ad spend -- muting a potential blockbuster day into a below-average one.
 
 Multiple levels of depth:
 
@@ -1239,7 +1239,7 @@ ORDER BY cart_size;
 <details>
 <summary>Discussion</summary>
 
-This exercise tests whether cart size predicts conversion. Since quantity is sampled independently from the purchase decision, you should find that average cart quantity is virtually identical between converted and abandoned sessions (~2.9 items per session). The conversion rate across cart size buckets is also flat (~9% across all buckets, from 1-item carts to 6+ items).
+This exercise tests whether cart size predicts conversion. Since quantity is sampled independently from the purchase decision, you should find that average cart quantity is virtually identical between converted and abandoned sessions (2.85 vs 2.90 items per session). The conversion rate across cart size buckets is also flat (8-10% across all buckets, from 1-item carts to 6+ items).
 
 That's a real finding: bigger carts don't convert better in this data. In a real business, this would mean the VP's intuition ("big carts = serious buyers") isn't supported. The checkout friction affects all cart sizes equally.
 
@@ -1306,7 +1306,7 @@ ORDER BY month;
 
 The revenue formula `price * quantity * (1 - discount_pct)` is deceptively simple but teaches an important concept: net revenue after discounts. A student who uses `price` alone misses both quantity and discount effects.
 
-With uniform discounts (avg ~7.4%) and Poisson-distributed quantities (avg ~1.7), AOV fluctuates month-to-month but shows no systematic trend. Month-over-month swings reflect changing product mix and order composition more than systematic trends.
+With uniform discounts (avg 7.4%) and Poisson-distributed quantities (avg 1.7), AOV fluctuates month-to-month but shows no systematic trend. Month-over-month swings reflect changing product mix and order composition more than systematic trends.
 
 If AOV is flat while order count grows, that's actually good news for the CFO -- the business is scaling without discounting more aggressively. If AOV were declining, the follow-up question would be "is it because we're discounting more, or because customers are buying cheaper products?"
 
@@ -1384,7 +1384,7 @@ ORDER BY discount_bucket;
 <details>
 <summary>Discussion</summary>
 
-The key discovery: discounts are uniformly distributed (0-15%) and completely independent of customer segment, tier, and basket size. Average discount is ~7.4% for every segment. Budget customers get the same discounts as premium. Small baskets get the same discounts as large ones.
+The key discovery: discounts are uniformly distributed (0-15%) and completely independent of customer segment, tier, and basket size. Average discount is 7.2-7.5% for every segment. Budget customers get the same discounts as premium. Small baskets get the same discounts as large ones.
 
 This is itself a finding -- and a valuable one. In real life, you'd report: "Our discounts aren't targeted. Every customer gets roughly the same discount regardless of who they are or how much they're buying. There's no evidence that discounts are driving larger baskets or being used strategically."
 
@@ -1466,11 +1466,11 @@ The category-level view is far more useful than product-level. Top co-browsed ca
 
 | category_1 | category_2 | shared_sessions |
 |---|---|---:|
-| accessories | gaming | ~2,264 |
-| accessories | smartphones | ~2,114 |
-| accessories | laptops | ~1,827 |
-| laptops | smartphones | ~1,730 |
-| gaming | smartphones | ~1,699 |
+| accessories | gaming | 2,264 |
+| accessories | smartphones | 2,114 |
+| accessories | laptops | 1,827 |
+| laptops | smartphones | 1,730 |
+| gaming | smartphones | 1,699 |
 
 Accessories appears in 3 of the top 5 pairs -- it's the universal cross-sell category. This makes business sense: people shopping for a laptop or phone naturally browse accessories too.
 
@@ -1585,16 +1585,16 @@ The retention picture is stark:
 | Months since first visit | Retention |
 |---:|---:|
 | 0 | 100% |
-| 1 | ~5.5% |
-| 3 | ~5.0% |
-| 6 | ~4.3% |
-| 12 | ~2.8% |
+| 1 | 5.5% |
+| 3 | 5.0% |
+| 6 | 4.3% |
+| 12 | 2.8% |
 
-There's a massive cliff from month 0 to month 1 -- ~95% of customers never return after their first month. After that initial drop, retention decays gradually, losing about 0.2 percentage points per month.
+There's a massive cliff from month 0 to month 1 -- 95% of customers never return after their first month. After that initial drop, retention decays gradually, losing about 0.2 percentage points per month.
 
-This answers the head of growth's question directly: **the business is heavily acquisition-dependent.** Growth is coming from finding new customers, not retaining existing ones. Only ~5.5% return within a month, and by month 12, just ~2.8% are still active.
+This answers the head of growth's question directly: **the business is heavily acquisition-dependent.** Growth is coming from finding new customers, not retaining existing ones. Only 5.5% return within a month, and by month 12, just 2.8% are still active.
 
-Cohort-by-cohort, month-1 retention ranges from ~3.7% to ~8.4%, with no clear improving trend -- the company isn't getting better at retention over time. December cohorts are the largest (holiday traffic) but don't retain meaningfully better.
+Cohort-by-cohort, month-1 retention ranges from 3.7% to 8.4%, with no clear improving trend -- the company isn't getting better at retention over time. December cohorts are the largest (holiday traffic) but don't retain meaningfully better.
 
 A notable pattern: once a customer returns after month 1, they tend to stay active for several more months. The challenge isn't keeping engaged customers -- it's getting first-time visitors to come back at all.
 
@@ -1712,18 +1712,18 @@ The Nov 25-30 window tells a clearer story:
 
 | Year | Purchases | Net Revenue | Avg Daily Revenue |
 |---:|---:|---:|---:|
-| 2022 | ~33 | ~$10,554 | ~$1,759 |
-| 2023 | ~47 | ~$11,675 | ~$1,946 |
-| 2024 | ~78 | ~$17,554 | ~$2,926 |
+| 2022 | 33 | $10,554 | $1,759 |
+| 2023 | 47 | $11,675 | $1,946 |
+| 2024 | 78 | $17,554 | $2,926 |
 
-Interestingly, the wider window shows 2024 *grew* ~50% over 2023 despite the Black Friday outage. The post-outage recovery days (especially Nov 30 with ~$3,746 in revenue) captured much of the pent-up demand. But Nov 29 itself earned only ~$699 vs. ~$1,274 in 2023 -- the outage clearly suppressed that single day. The "cost" is best estimated by comparing what Nov 29 should have earned (projecting from prior years and surrounding days) minus the actual $699, while acknowledging that some of that revenue was merely deferred rather than lost.
+Interestingly, the wider window shows 2024 *grew* 50% over 2023 despite the Black Friday outage. The post-outage recovery days (especially Nov 30 with $3,746 in revenue) captured much of the pent-up demand. But Nov 29 itself earned only $699 vs. $1,274 in 2023 -- the outage clearly suppressed that single day. The "cost" is best estimated by comparing what Nov 29 should have earned (projecting from prior years and surrounding days) minus the actual $699, while acknowledging that some of that revenue was merely deferred rather than lost.
 
 Multiple levels of depth:
 
 | Level | What you estimate |
 |-------|--------------|
 | Basic | "2024 Black Friday (Nov 29) revenue was lower than 2023" (directional only) |
-| Moderate | Dollar difference for Nov 29 between 2024 actual and 2023 ($699 vs $1,274) |
+| Moderate | Dollar difference for Nov 29 between 2024 and 2023 ($699 vs $1,274) |
 | Thorough | Growth-adjusted projection: what Nov 29 *should* have earned minus what it did |
 | Exceptional | Wider window analysis showing recovery offset the single-day loss, estimating *net* impact |
 
