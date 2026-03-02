@@ -6,4 +6,4 @@ INFRA_0001,degraded,10.0.1.100,techmart-electronics.com,0.4,2024-08-22 00:00:00,
 INFRA_0001,healthy,10.0.1.100,techmart-electronics.com,0.02,2024-08-23 00:00:00,2024-11-29 00:00:00
 INFRA_0001,degraded,10.0.1.100,techmart-electronics.com,0.25,2024-11-29 00:00:00,2024-11-30 00:00:00
 INFRA_0001,healthy,10.0.1.100,techmart-electronics.com,0.02,2024-11-30 00:00:00,
-INFRA_0002,healthy,132.129.167.187,garcia.net,0.02,2022-03-01 00:00:00,
+INFRA_0002,healthy,19.48.39.204,murray.com,0.02,2022-03-01 00:00:00,

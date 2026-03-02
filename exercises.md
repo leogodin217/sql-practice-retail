@@ -54,25 +54,34 @@ The CEO is prepping for a board meeting and needs a headcount.
 <details>
 <summary>Solution</summary>
 
-`dim_customer` uses Type-2 SCD -- when a customer's `total_purchases` changes, a new row is created. A naive `COUNT(*)` returns 13,314 (all historical rows) instead of the real customer count.
+`dim_customer` uses Type-2 SCD -- when a customer's `total_purchases` changes, a new row is created. A naive `COUNT(*)` returns 13,294 (all historical rows) instead of the real customer count.
 
 **Using DISTINCT:**
 
 ```sql
 SELECT 
     COUNT(DISTINCT id) AS customer_count
-FROM dim_customer;
+FROM retaildb.main.dim_customer;
 ```
 
 **Only current customers:**
 
 ```sql
 SELECT COUNT(*) AS current_customers
-FROM dim_customer
+FROM retaildb.main.dim_customer
 WHERE valid_to IS NULL;
 ```
 
 Customers as people who purchased something. 
+
+```sql
+SELECT 
+    COUNT(DISTINCT id) AS customer_count
+FROM retaildb.main.dim_customer
+WHERE total_purchases > 0;
+```
+
+Same data, but from the fact table. 
 
 ```sql
 SELECT 
@@ -81,27 +90,18 @@ FROM fact_customer_action
 WHERE action_type = 'purchase'
 ```
 
-Same data, but from the fact table. 
-
-```sql
-SELECT 
-    COUNT(DISTINCT id) AS customer_count
-FROM dim_customer
-WHERE total_purchases > 0;
-```
-
-
-
 </details>
 
 <details>
 <summary>Discussion</summary>
 
-Both approaches return 8,949. The first counts every customer who has ever existed. The second counts only the latest version of each. If the CEO wants "how many customers do we have right now," the second is more appropriate.
+Both approaches return 9,074. The first deduplicates across all historical rows (SCD-2 creates multiple rows per customer). The second counts only the latest version of each. If the CEO wants "how many customers do we have right now," the second is more appropriate.
 
-The key question to ask yourself: "I got 8,949, but the table has 13,314 rows. Why?" This leads naturally into SCD-2 concepts. The inflation is modest here because `total_purchases` only changes when a customer completes a purchase, and most customers don't purchase.
+The key question to ask yourself: "I got 9,074, but the table has 13,294 rows. Why?" This leads naturally into SCD-2 concepts. The inflation is modest here because `total_purchases` only changes when a customer completes a purchase, and most customers don't purchase.
 
-But wait, there's more! The real question here is what is a customer? Our customers table includes anyone that ever signed into our site. Some may say that is the definition of a prospect or a lead. Another definition of customer could 
+But wait, there's more! The real question here is what is a customer? Our customers table includes anyone that ever signed into our site. Some may say that is the definition of a prospect or a lead. Another definition of customer could be all people how have purchased a product. We can get that by querying dim_customer or fact_customer_action and get 663. 
+
+Side note: Stuff like this happens all the time. One team measures X one way, but other teams measure it differently. This is the time to [be pedantic](https://leo-godin.medium.com/so-you-want-to-be-a-data-engineer-1564e8ca6d0a) and agree on a definition. 
 
 </details>
 
@@ -132,7 +132,7 @@ SELECT
     ROUND(AVG(price), 2) AS avg_price,
     MIN(price) AS cheapest,
     MAX(price) AS most_expensive
-FROM dim_product
+FROM retaildb.main.dim_product
 GROUP BY category
 ORDER BY product_count DESC;
 ```
@@ -145,7 +145,7 @@ SELECT
     name,
     category,
     price
-FROM dim_product
+FROM retaildb.main.dim_product
 ORDER BY category, price DESC;
 ```
 
@@ -154,9 +154,7 @@ ORDER BY category, price DESC;
 <details>
 <summary>Discussion</summary>
 
-Running `SELECT * FROM dim_product LIMIT 10` explores the data but doesn't summarize it. Ask yourself: "If I had to explain our catalog in one table, what would it show?" The grouped version is more useful for a new hire getting oriented.
-
-You may notice that product names look like person names (Elizabeth Clay, Nicholas Richmond) -- that's an artifact of the data generator. The 3 pinned products (TechMart Pro Laptop, TechMart Phone X, TechMart Wireless Earbuds) are the realistic ones.
+Running `SELECT * FROM retaildb.main.dim_product LIMIT 10` explores the data but doesn't summarize it. Ask yourself: "If I had to explain our catalog in one table, what would it show?" The grouped version is more useful for a new hire getting oriented.
 
 </details>
 
@@ -212,7 +210,7 @@ LIMIT 5;
 -- Step 2: Use that date (once you know it)
 SELECT action_type, COUNT(*) AS cnt
 FROM fact_customer_action
-WHERE timestamp::DATE = '2024-12-02'  -- replace with whatever you found
+WHERE timestamp::DATE = '2024-12-22'  -- replace with whatever you found
 GROUP BY action_type
 ORDER BY cnt DESC;
 ```
@@ -222,7 +220,7 @@ ORDER BY cnt DESC;
 <details>
 <summary>Discussion</summary>
 
-The busiest day is a real business event -- likely Cyber Monday or a holiday-season peak in late December. Look at the top 5 days and you'll see them clustering around the holiday season (late November through December).
+The busiest day is a real business event -- the Sunday before Christmas, a peak holiday-shopping day in late December. Look at the top 5 days and you'll see them clustering around the holiday season (December).
 
 Ask yourself: "Why was this day the busiest? Does the explanation make business sense?" If you see multiple top days in the same window, that's the holiday surge at work. The dataset spans nearly three years, so you can also check whether the same pattern repeats each year.
 
@@ -267,7 +265,7 @@ GROUP BY day_type;
 <details>
 <summary>Discussion</summary>
 
-If you reported just totals, consider: there are roughly 2.5x as many weekdays as weekend days. Is a total comparison fair? The data has a weekend surge -- both new arrivals and returning shoppers are more active on Sat/Sun. You should see a clear difference in average daily activity (about 46% higher on weekends). The behavioral explanation: people have more free time to browse on weekends.
+If you reported just totals, consider: there are roughly 2.5x as many weekdays as weekend days. Is a total comparison fair? The data has a weekend surge -- both new arrivals and returning shoppers are more active on Sat/Sun. You should see a clear difference in average daily activity (about 47% higher on weekends). The behavioral explanation: people have more free time to browse on weekends.
 
 </details>
 
@@ -373,9 +371,9 @@ ORDER BY d.day;
 <details>
 <summary>Discussion</summary>
 
-You might expect a massive Black Friday spike -- especially with 4x ad spend. Instead, Nov 29, 2024 drops to 0.5x baseline -- well below an average day. Meanwhile, Cyber Monday (Dec 2) surges to 1.9x. The surrounding days (Nov 30 through early December, 1.3-1.6x) all dramatically outperform Black Friday. Something suppressed the expected spike.
+You might expect a massive Black Friday spike -- especially with 4x ad spend. Instead, Nov 29, 2024 drops to 0.5x baseline -- well below an average day. Meanwhile, Cyber Monday (Dec 2) surges to 1.6x. The surrounding days (Nov 30 through early December, 1.4-1.5x) all dramatically outperform Black Friday. Something suppressed the expected spike.
 
-The dataset covers nearly three years. Compare Nov 29 across years: in 2022 and 2023, Black Friday clearly stands out above its neighboring days. In 2024, it doesn't -- Nov 30 and Dec 1-2 all beat it. The question "why didn't 2024 Black Friday spike like previous years?" is the real analytical challenge -- and it connects to the infrastructure exercise later.
+The dataset covers nearly three years. Compare Black Friday across years (Nov 25 in 2022, Nov 24 in 2023, Nov 29 in 2024): in 2022 and 2023, Black Friday is among the highest-traffic days in its week. In 2024, it doesn't -- Nov 30 and Dec 1-2 all beat it. The question "why didn't 2024 Black Friday spike like previous years?" is the real analytical challenge -- and it connects to the infrastructure exercise later.
 
 The key takeaway is that an analyst's job is to describe what actually happened, not what they expected. Having multiple years of data makes the 2024 anomaly much easier to spot.
 
@@ -454,9 +452,9 @@ FROM session_actions;
 <details>
 <summary>Discussion</summary>
 
-The first approach answers "of all customers who ever added to cart, how many ever purchased?" It shows only 9.3% converted -- meaning 90.7% of cart-adding customers never completed a purchase. The VP's concern is very much confirmed.
+The first approach answers "of all customers who ever added to cart, how many ever purchased?" It shows only 8.9% converted -- meaning 91.1% of cart-adding customers never completed a purchase. The VP's concern is very much confirmed.
 
-The second approach looks at individual shopping sessions. Per-session, 9.1% of sessions with a cart add also have a purchase -- similar to the customer-level rate, which tells you that most purchasing happens within a single session rather than across multiple visits.
+The second approach looks at individual shopping sessions. Per-session, 9.0% of sessions with a cart add also have a purchase -- similar to the customer-level rate, which tells you that most purchasing happens within a single session rather than across multiple visits.
 
 Discovering `session_id` and using it for session-level grouping is a sign of strong analytical thinking. The per-session view is especially important here because each shopping session completes quickly -- a customer's entire browse-to-purchase path happens in a single visit.
 
@@ -505,9 +503,9 @@ ORDER BY month;
 <details>
 <summary>Discussion</summary>
 
-The picture is more nuanced than "summer bad." Look at month-over-month growth rates: June tends to show the weakest growth (flat to slightly negative MoM in 2023 and 2024), and July often decelerates further. But August recovers sharply due to back-to-school demand. The summer slowdown is real but short-lived.
+The picture is more nuanced than "summer bad." Look at month-over-month growth rates: June tends to show decelerating growth (low single digits in 2023 and 2024, down from stronger spring months), and July can dip further (notably −0.3% in 2024). August and September tend to recover. The summer slowdown is real but short-lived.
 
-As the great philosopher [Marcel the Shell with Shoes On](https://youtu.be/VF9-sEbqDvU?si=9uLV8gGym08nyJuw&t=162) once said, "Compared to what?". This is the key question. Saying "summer was bad" based on June/July alone is partially right. Noticing that August breaks the pattern shows stronger analytical thinking. With nearly three years of data, you can check whether this pattern repeats each summer -- and it does.
+As the great philosopher [Marcel the Shell with Shoes On](https://youtu.be/VF9-sEbqDvU?si=9uLV8gGym08nyJuw&t=162) once said, "Compared to what?". This is the key question. Saying "summer was bad" based on June/July alone is partially right. Noticing that August breaks the pattern shows stronger analytical thinking. With nearly three years of data, you can check whether this pattern repeats each summer -- and in 2023-2024, it does (2022 is harder to read because the business was still in early growth).
 
 The deeper lesson: the growing customer base creates an upward trend that masks seasonal effects. Comparing to an overall average across 34 months is misleading because early months are tiny and late months are large. A thorough answer will compare month-over-month growth rates or look at the same months across years to isolate the summer slowdown from the growth curve.
 
@@ -545,7 +543,7 @@ SELECT
         / NULLIF(COUNT(DISTINCT c.id), 0),
         2
     ) AS purchases_per_customer
-FROM dim_customer c
+FROM retaildb.main.dim_customer c
 JOIN fact_customer_action f ON c.id = f.customer_id
 WHERE c.valid_to IS NULL
 GROUP BY c.segment
@@ -564,7 +562,7 @@ SELECT
         / NULLIF(COUNT(DISTINCT c.id), 0),
         2
     ) AS revenue_per_customer
-FROM dim_customer c
+FROM retaildb.main.dim_customer c
 JOIN fact_customer_action f ON c.id = f.customer_id
 LEFT JOIN dim_product p ON f.product_id = p.id
 WHERE c.valid_to IS NULL
@@ -577,9 +575,9 @@ ORDER BY revenue_per_customer DESC;
 <details>
 <summary>Discussion</summary>
 
-Premium customers convert from cart to purchase at 14.8% vs. 6.2% for budget -- and the difference compounds across the entire journey. The data shows premium at 1.52 purchases per customer vs. budget at 0.43 (about 3.5x). But "spend more" depends on definition -- if you measure average item price, the difference is smaller because product selection is popularity-weighted, not segment-weighted.
+Premium customers convert from cart to purchase at 13.7% vs. 5.4% for budget -- and the difference compounds across the entire journey. The data shows premium at 1.65 purchases per customer vs. budget at 0.44 (about 3.8x). But "spend more" depends on definition -- if you measure average item price, the difference is smaller because product selection is popularity-weighted, not segment-weighted.
 
-A basic answer checks one metric. A thorough answer checks several and synthesizes: "Premium buys more often (1.52 vs 0.43 purchases per customer), but average item value is similar because product selection isn't segment-driven. The real difference is conversion rate, not basket size."
+A basic answer checks one metric. A thorough answer checks several and synthesizes: "Premium buys more often (1.65 vs 0.44 purchases per customer), but average item value is similar because product selection isn't segment-driven. The real difference is conversion rate, not basket size."
 
 </details>
 
@@ -647,7 +645,7 @@ The data has clear hourly patterns: evening peak (17-20), morning shopping (9-11
 
 ### Exercise 11: "Who are our most valuable customers beyond the VIP list?"
 
-The sales team sees about 56 customers tagged as VIP in the system. They think the real list of high-value customers is bigger. Can you find who else deserves attention?
+The sales team sees about 40 customers tagged as VIP in the system. They think the real list of high-value customers is bigger. Can you find who else deserves attention?
 
 <details>
 <summary>Hints</summary>
@@ -675,7 +673,7 @@ WITH customer_stats AS (
         COUNT(CASE WHEN f.action_type = 'purchase' THEN 1 END) AS purchases,
         COUNT(*) AS total_actions,
         COUNT(DISTINCT f.session_id) AS visits
-    FROM dim_customer c
+    FROM retaildb.main.dim_customer c
     JOIN fact_customer_action f ON c.id = f.customer_id
     WHERE c.valid_to IS NULL
     GROUP BY c.id, c.name, c.segment, c.tier, c.income
@@ -700,9 +698,9 @@ LIMIT 25;
 <details>
 <summary>Discussion</summary>
 
-The exercise deliberately frames it as "beyond the VIP list." A good first step is to run `SELECT * FROM dim_customer WHERE tier = 'vip'` to see the existing 56 VIPs -- understanding what exists before building on it. The real task is identifying high-value non-VIP customers.
+The exercise deliberately frames it as "beyond the VIP list." A good first step is to run `SELECT * FROM retaildb.main.dim_customer WHERE tier = 'vip'` to see the existing 40 VIPs -- understanding what exists before building on it. The real task is identifying high-value non-VIP customers.
 
-You'll notice that not all VIPs are equally active -- roughly a quarter are repeat purchasers while the rest signed up but never converted. Think of it as a VIP signup program with 27% conversion. Building a scoring system that combines purchases, visits, and income shows analytical maturity.
+You'll notice that not all VIPs are equally active -- roughly a third are repeat purchasers while the rest signed up but never converted. Think of it as a VIP signup program with 30% conversion. Building a scoring system that combines purchases, visits, and income shows analytical maturity.
 
 </details>
 
@@ -732,7 +730,7 @@ WITH channel_metrics AS (
         COUNT(CASE WHEN f.action_type = 'purchase' THEN 1 END) AS purchases,
         COUNT(DISTINCT CASE WHEN f.action_type = 'purchase' THEN c.id END) AS buyers,
         COUNT(DISTINCT f.session_id) AS total_sessions
-    FROM dim_customer c
+    FROM retaildb.main.dim_customer c
     JOIN fact_customer_action f ON c.id = f.customer_id
     WHERE c.valid_to IS NULL
     GROUP BY c.acquisition_source
@@ -788,7 +786,7 @@ WITH funnel AS (
         COUNT(DISTINCT CASE WHEN f.action_type = 'product_view' THEN c.id END) AS viewers,
         COUNT(DISTINCT CASE WHEN f.action_type = 'add_to_cart' THEN c.id END) AS carted,
         COUNT(DISTINCT CASE WHEN f.action_type = 'purchase' THEN c.id END) AS purchasers
-    FROM dim_customer c
+    FROM retaildb.main.dim_customer c
     JOIN fact_customer_action f ON c.id = f.customer_id
     WHERE c.valid_to IS NULL
     GROUP BY c.segment
@@ -811,7 +809,7 @@ ORDER BY segment;
 <details>
 <summary>Discussion</summary>
 
-About 80-83% of customers view products, and nearly all of them add to cart. The biggest drop-off is from cart to purchase: only 6.2% of budget cart-adders purchase vs. 14.8% of premium. So the answer is layered: "Most customers browse and nearly all add to cart, but the conversion from cart to purchase is where segments diverge dramatically. Premium converts at about 2.4x the budget rate."
+About 80-82% of customers view products, and nearly all of them add to cart. The biggest drop-off is from cart to purchase: only 5.8% of budget cart-adders purchase vs. 15.9% of premium. So the answer is layered: "Most customers browse and nearly all add to cart, but the conversion from cart to purchase is where segments diverge dramatically. Premium converts at about 2.7x the budget rate."
 
 Computing an overall view-to-purchase ratio gives you a number. Building a funnel by action type AND breaking it down by segment gives you an actionable insight. Ask yourself: "If you could only fix one part of the funnel, which step and which segment would you target?"
 
@@ -876,10 +874,10 @@ ORDER BY
 <details>
 <summary>Discussion</summary>
 
-The 3-day sale period average looks underwhelming -- virtually no lift in daily cart adds compared to the week before or after. But the averaged result hides a massive confounder. Look day by day:
+The 3-day sale period average looks underwhelming -- lower daily cart adds (~19% decrease) than the surrounding weeks. But the averaged result hides a massive confounder. Look day by day:
 
-- **March 15 (sale day 1):** Only 48 total actions -- a catastrophic drop from the 297/day baseline. An infrastructure outage (INFRA_0001 went degraded) fires on the same day. The outage blocks re-entry for all returning customers, so only new arrivals generate sessions. This single day drags the 3-day average down well below baseline.
-- **March 16-17 (sale days 2-3):** Infrastructure recovers and activity surges (423 and 454 actions). Any sale effect is hard to disentangle from the natural weekend recovery and pent-up demand.
+- **March 15 (sale day 1):** Only 30 total actions -- a catastrophic drop from the ~331/day baseline. An infrastructure outage (INFRA_0001 went degraded) fires on the same day. The outage blocks re-entry for all returning customers, so only new arrivals generate sessions. This single day drags the 3-day average down well below baseline.
+- **March 16-17 (sale days 2-3):** Infrastructure recovers and activity surges (450 and 401 actions). Any sale effect is hard to disentangle from the natural weekend recovery and pent-up demand.
 
 The key lesson isn't whether the sale "worked" -- it's that **you can't evaluate a 3-day promotion when 1/3 of it was wiped out by a system outage**. Averaging all three days gives a misleading "the sale barely worked." Looking day by day reveals that the outage is the dominant signal, not the sale.
 
@@ -919,7 +917,7 @@ WITH customer_activity AS (
         MAX(f.timestamp) AS last_activity,
         COUNT(CASE WHEN f.action_type = 'purchase' THEN 1 END) AS purchases,
         COUNT(DISTINCT f.session_id) AS sessions
-    FROM dim_customer c
+    FROM retaildb.main.dim_customer c
     JOIN fact_customer_action f ON c.id = f.customer_id
     WHERE c.valid_to IS NULL AND c.active = true
     GROUP BY c.id, c.name, c.segment, c.income
@@ -1084,12 +1082,12 @@ WHERE d.day BETWEEN '2024-11-25' AND '2024-12-07'
 ORDER BY d.day;
 ```
 
-Nov 29 drops to 0.5x baseline -- well below average despite 4x ad spend. Meanwhile, the days after (Nov 30 through Dec 2) surge to 1.4-1.9x. Cyber Monday (Dec 2) hits 1.9x. With 4x the normal ad budget, Black Friday should have been one of the biggest days of the year -- instead it was suppressed well below normal.
+Nov 29 drops to 0.54x baseline -- well below average despite 4x ad spend. Meanwhile, the days after (Nov 30 through Dec 2) surge to 1.4-1.57x. Cyber Monday (Dec 2) hits 1.57x. With 4x the normal ad budget, Black Friday should have been one of the biggest days of the year -- instead it was suppressed well below normal.
 
 **Step 2: Discover the infrastructure table**
 
 ```sql
-SELECT * FROM dim_infrastructure ORDER BY valid_from;
+SELECT * FROM retaildb.main.dim_infrastructure ORDER BY valid_from;
 ```
 
 The `dim_infrastructure` table has SCD-2 rows showing three outage events across the year. If you haven't explored this table yet, ask yourself: "Are there any other tables in the database I haven't looked at?"
@@ -1103,12 +1101,12 @@ SELECT
     error_rate,
     valid_from::DATE AS started,
     valid_to::DATE AS ended
-FROM dim_infrastructure
+FROM retaildb.main.dim_infrastructure
 WHERE id = 'INFRA_0001'
 ORDER BY valid_from;
 ```
 
-INFRA_0001 went `degraded` on exactly 2024-11-29 (error_rate 0.25) and recovered on 2024-11-30. The timing matches perfectly -- the outage ate the expected Black Friday boost. Compare to the March outage (error_rate 0.35, activity dropped to 17.5% of prior day) and August outage (error_rate 0.4, dropped to 25.7%). The Black Friday outage was less severe (0.25 error rate), retaining 55.8% of prior day's activity, but still significantly suppressed what should have been a blockbuster day.
+INFRA_0001 went `degraded` on exactly 2024-11-29 (error_rate 0.25) and recovered on 2024-11-30. The timing matches perfectly -- the outage ate the expected Black Friday boost. Compare to the March outage (error_rate 0.35, activity dropped to 8.2% of prior day) and August outage (error_rate 0.4, dropped to 4.6%). The Black Friday outage was less severe (0.25 error rate), retaining 58.9% of prior day's activity, but still significantly suppressed what should have been a blockbuster day.
 
 **Step 4 (thorough answer): Quantify all outage impacts**
 
@@ -1117,7 +1115,7 @@ WITH outages AS (
     SELECT
         valid_from::DATE AS outage_date,
         valid_to::DATE AS recovery_date
-    FROM dim_infrastructure
+    FROM retaildb.main.dim_infrastructure
     WHERE id = 'INFRA_0001' AND status = 'degraded'
 ),
 daily AS (
@@ -1145,9 +1143,9 @@ ORDER BY o.outage_date;
 
 This exercise teaches root cause analysis. The business question is "what went wrong?" and the answer isn't in the customer data -- it's in an operational table you might not have noticed. This mirrors real analytics work: the explanation for a metric moving isn't always in the same table as the metric.
 
-The dataset spans three years, so you can compare Black Friday across years. In 2022 and 2023, Nov 29 clearly stands out above its neighboring days -- it's the local peak. In 2024, it doesn't stand out at all -- Nov 30 and Dec 1-2 all surpass it. The cross-year comparison is stronger evidence than just looking at baseline multiples, because it controls for the holiday season effect.
+The dataset spans three years, so you can compare Black Friday across years (Nov 25 in 2022, Nov 24 in 2023, Nov 29 in 2024). In 2022 and 2023, Black Friday is among the highest-traffic days in its week. In 2024, it doesn't stand out at all -- Nov 30 and Dec 1-2 all surpass it. The cross-year comparison is stronger evidence than just looking at baseline multiples, because it controls for the holiday season effect.
 
-The step-4 query reveals an interesting pattern across the three outages: March (error_rate 0.35) crashed activity to 17.5% of prior day, August (error_rate 0.4) to 25.7%, and November (error_rate 0.25) to 55.8%. The lower error rate correlated with less suppression. Even so, the November outage dragged Black Friday well below baseline (0.5x) despite 4x ad spend -- muting a potential blockbuster day into a below-average one.
+The step-4 query reveals that the three outages had very different impacts -- March (error_rate 0.35) dropped activity to 8.2% of prior day, August (error_rate 0.4) to 4.6%, and November (error_rate 0.25) to 58.9% -- suggesting that error rate alone doesn't predict the severity of the impact; timing, baseline traffic volume, and day-of-week likely play a role. Even so, the November outage dragged Black Friday well below baseline (0.54x) despite 4x ad spend -- muting a potential blockbuster day into a below-average one.
 
 Multiple levels of depth:
 
@@ -1155,8 +1153,8 @@ Multiple levels of depth:
 |-------|--------------|
 | Basic | "Nov 29 didn't spike like expected" (confirms the claim, stops there) |
 | Moderate | Finds the infrastructure table, connects the outage to the date |
-| Thorough | Quantifies all three outages, notices the severity differences (error_rate correlates with impact) |
-| Exceptional | Compares across years (2022/2023 BF clearly peaks, 2024 doesn't) and notes the post-outage surge (1.4-1.9x following days) suggests pent-up demand |
+| Thorough | Quantifies all three outages, notices different severity levels across the three outages |
+| Exceptional | Compares across years (2022/2023 BF clearly peaks, 2024 doesn't) and notes the post-outage surge (1.4-1.57x following days) suggests pent-up demand |
 
 Follow-up questions to consider:
 - "If you were the head of e-commerce, what would you recommend for next Black Friday?"
@@ -1239,7 +1237,7 @@ ORDER BY cart_size;
 <details>
 <summary>Discussion</summary>
 
-This exercise tests whether cart size predicts conversion. Since quantity is sampled independently from the purchase decision, you should find that average cart quantity is virtually identical between converted and abandoned sessions (2.85 vs 2.90 items per session). The conversion rate across cart size buckets is also flat (8-10% across all buckets, from 1-item carts to 6+ items).
+This exercise tests whether cart size predicts conversion. Since quantity is sampled independently from the purchase decision, you should find that average cart quantity is virtually identical between converted and abandoned sessions (2.92 vs 2.90 items per session). The conversion rate across cart size buckets is also flat (8-10% across all buckets, from 1-item carts to 6+ items).
 
 That's a real finding: bigger carts don't convert better in this data. In a real business, this would mean the VP's intuition ("big carts = serious buyers") isn't supported. The checkout friction affects all cart sizes equally.
 
@@ -1306,7 +1304,7 @@ ORDER BY month;
 
 The revenue formula `price * quantity * (1 - discount_pct)` is deceptively simple but teaches an important concept: net revenue after discounts. A student who uses `price` alone misses both quantity and discount effects.
 
-With uniform discounts (avg 7.4%) and Poisson-distributed quantities (avg 1.7), AOV fluctuates month-to-month but shows no systematic trend. Month-over-month swings reflect changing product mix and order composition more than systematic trends.
+With uniform discounts (avg 7.5%) and Poisson-distributed quantities (avg 1.7), AOV fluctuates month-to-month but shows no systematic trend. Month-over-month swings reflect changing product mix and order composition more than systematic trends.
 
 If AOV is flat while order count grows, that's actually good news for the CFO -- the business is scaling without discounting more aggressively. If AOV were declining, the follow-up question would be "is it because we're discounting more, or because customers are buying cheaper products?"
 
@@ -1384,7 +1382,7 @@ ORDER BY discount_bucket;
 <details>
 <summary>Discussion</summary>
 
-The key discovery: discounts are uniformly distributed (0-15%) and completely independent of customer segment, tier, and basket size. Average discount is 7.2-7.5% for every segment. Budget customers get the same discounts as premium. Small baskets get the same discounts as large ones.
+The key discovery: discounts are uniformly distributed (0-15%) and completely independent of customer segment, tier, and basket size. Average discount is 7.5-7.6% for every segment. Budget customers get the same discounts as premium. Small baskets get the same discounts as large ones.
 
 This is itself a finding -- and a valuable one. In real life, you'd report: "Our discounts aren't targeted. Every customer gets roughly the same discount regardless of who they are or how much they're buying. There's no evidence that discounts are driving larger baskets or being used strategically."
 
@@ -1466,15 +1464,15 @@ The category-level view is far more useful than product-level. Top co-browsed ca
 
 | category_1 | category_2 | shared_sessions |
 |---|---|---:|
-| accessories | gaming | 2,264 |
-| accessories | smartphones | 2,114 |
-| accessories | laptops | 1,827 |
-| laptops | smartphones | 1,730 |
-| gaming | smartphones | 1,699 |
+| accessories | smartphones | 2,710 |
+| accessories | gaming | 2,193 |
+| accessories | laptops | 2,183 |
+| laptops | smartphones | 2,099 |
+| accessories | audio | 1,688 |
 
-Accessories appears in 3 of the top 5 pairs -- it's the universal cross-sell category. This makes business sense: people shopping for a laptop or phone naturally browse accessories too.
+Accessories appears in 4 of the top 5 pairs -- it's the universal cross-sell category. This makes business sense: people shopping for a laptop or phone naturally browse accessories too.
 
-At the product level, the top pairs only share 18-23 sessions -- the signal is much weaker because products are more granular. This is a practical lesson: **aggregate before analyzing when individual-level data is too sparse for meaningful patterns.**
+At the product level, the top pairs only share 28-42 sessions -- the signal is much weaker because products are more granular. This is a practical lesson: **aggregate before analyzing when individual-level data is too sparse for meaningful patterns.**
 
 The self-join is the most important SQL concept here. Many students haven't encountered it before. The condition `f1.product_id < f2.product_id` is elegant but not obvious -- it's worth spending time understanding why it works and why alternatives (like DISTINCT on sorted pairs) are messier.
 
@@ -1585,16 +1583,16 @@ The retention picture is stark:
 | Months since first visit | Retention |
 |---:|---:|
 | 0 | 100% |
-| 1 | 5.5% |
-| 3 | 5.0% |
-| 6 | 4.3% |
-| 12 | 2.8% |
+| 1 | 5.1% |
+| 3 | 4.7% |
+| 6 | 4.1% |
+| 12 | 2.7% |
 
-There's a massive cliff from month 0 to month 1 -- 95% of customers never return after their first month. After that initial drop, retention decays gradually, losing about 0.2 percentage points per month.
+There's a massive cliff from month 0 to month 1 -- ~95% of customers never return after their first month. After that initial drop, retention decays gradually, losing about 0.2 percentage points per month.
 
-This answers the head of growth's question directly: **the business is heavily acquisition-dependent.** Growth is coming from finding new customers, not retaining existing ones. Only 5.5% return within a month, and by month 12, just 2.8% are still active.
+This answers the head of growth's question directly: **the business is heavily acquisition-dependent.** Growth is coming from finding new customers, not retaining existing ones. Only 5.1% return within a month, and by month 12, just 2.7% are still active.
 
-Cohort-by-cohort, month-1 retention ranges from 3.7% to 8.4%, with no clear improving trend -- the company isn't getting better at retention over time. December cohorts are the largest (holiday traffic) but don't retain meaningfully better.
+Cohort-by-cohort, month-1 retention ranges from 3.0% to 9.9%, with no clear improving trend -- the company isn't getting better at retention over time. December cohorts are the largest (holiday traffic) but don't retain meaningfully better.
 
 A notable pattern: once a customer returns after month 1, they tend to stay active for several more months. The challenge isn't keeping engaged customers -- it's getting first-time visitors to come back at all.
 
@@ -1630,6 +1628,8 @@ The CFO has read the incident report from Exercise 17 and wants a number. "I kno
 
 **Step 1: Black Friday revenue by year**
 
+Black Friday falls on a different date each year, so we match the actual date rather than a fixed calendar day:
+
 ```sql
 SELECT
     EXTRACT(YEAR FROM f.timestamp)::INT AS year,
@@ -1638,8 +1638,9 @@ SELECT
 FROM fact_customer_action f
 JOIN dim_product p ON f.product_id = p.id
 WHERE f.action_type = 'purchase'
-  AND EXTRACT(MONTH FROM f.timestamp) = 11
-  AND EXTRACT(DAY FROM f.timestamp) = 29
+  AND (f.timestamp::DATE = '2022-11-25'   -- Black Friday 2022
+    OR f.timestamp::DATE = '2023-11-24'   -- Black Friday 2023
+    OR f.timestamp::DATE = '2024-11-29')  -- Black Friday 2024
 GROUP BY year
 ORDER BY year;
 ```
@@ -1655,8 +1656,9 @@ WITH bf_revenue AS (
     FROM fact_customer_action f
     JOIN dim_product p ON f.product_id = p.id
     WHERE f.action_type = 'purchase'
-      AND EXTRACT(MONTH FROM f.timestamp) = 11
-      AND EXTRACT(DAY FROM f.timestamp) = 29
+      AND (f.timestamp::DATE = '2022-11-25'
+        OR f.timestamp::DATE = '2023-11-24'
+        OR f.timestamp::DATE = '2024-11-29')
     GROUP BY year
 )
 SELECT
@@ -1670,23 +1672,31 @@ FROM bf_revenue
 ORDER BY year;
 ```
 
-If 2022→2023 shows positive growth, apply that same growth rate to 2023's revenue to get what 2024 *should* have been. The difference between that projection and the actual 2024 number is the estimated loss.
+With only 5-8 purchases per Black Friday, the YoY swings are enormous (-25.5% then +199.6%). This demonstrates why a single day is unreliable -- we need a wider window.
 
 **Step 3: Wider window for a more robust estimate**
 
+Since Black Friday falls on different dates each year, we define a 6-day window around each year's actual Black Friday (2 days before through 3 days after):
+
 ```sql
-WITH holiday_revenue AS (
+WITH bf_dates AS (
+    SELECT 2022 AS yr, '2022-11-25'::DATE AS bf_date
+    UNION ALL SELECT 2023, '2023-11-24'::DATE
+    UNION ALL SELECT 2024, '2024-11-29'::DATE
+),
+holiday_revenue AS (
     SELECT
-        EXTRACT(YEAR FROM f.timestamp)::INT AS year,
+        bd.yr AS year,
         f.timestamp::DATE AS day,
         COUNT(*) AS purchases,
         SUM(p.price * f.quantity * (1 - f.discount_pct)) AS net_revenue
-    FROM fact_customer_action f
+    FROM bf_dates bd
+    JOIN fact_customer_action f
+      ON f.timestamp::DATE BETWEEN bd.bf_date - INTERVAL '2 days'
+                                AND bd.bf_date + INTERVAL '3 days'
     JOIN dim_product p ON f.product_id = p.id
     WHERE f.action_type = 'purchase'
-      AND EXTRACT(MONTH FROM f.timestamp) = 11
-      AND EXTRACT(DAY FROM f.timestamp) BETWEEN 25 AND 30
-    GROUP BY year, day
+    GROUP BY bd.yr, f.timestamp::DATE
 )
 SELECT
     year,
@@ -1706,27 +1716,29 @@ ORDER BY year;
 
 This exercise ties together everything from Exercise 17 (root cause analysis) with revenue math from Exercise 19 (AOV). It forces students to do something analysts do constantly: **estimate a counterfactual** -- what *would have* happened if the outage hadn't occurred.
 
-The first lesson is about **sample size**. Step 1 reveals that Nov 29 alone has only 5-8 purchases per year -- far too few to draw reliable conclusions. Year-over-year comparisons on a single day swing wildly because of random variation in who happened to buy and what they bought. This is exactly why Step 3 uses a wider window.
+The first lesson is about **sample size**. Step 1 reveals that Black Friday has only 5-8 purchases per year -- far too few to draw reliable conclusions. The YoY swings are wild: -25.5% from 2022 to 2023, then +199.6% from 2023 to 2024. With such small counts, one high-value purchase can swing the total by hundreds of dollars. This is exactly why Step 3 uses a wider window.
 
-The Nov 25-30 window tells a clearer story:
+The wider window (BF-2 through BF+3, 6 days each year) tells a clearer story:
 
 | Year | Purchases | Net Revenue | Avg Daily Revenue |
 |---:|---:|---:|---:|
-| 2022 | 33 | $10,554 | $1,759 |
-| 2023 | 47 | $11,675 | $1,946 |
-| 2024 | 78 | $17,554 | $2,926 |
+| 2022 | 50 | $15,265 | $2,544 |
+| 2023 | 67 | $16,573 | $2,762 |
+| 2024 | 68 | $26,760 | $4,460 |
 
-Interestingly, the wider window shows 2024 *grew* 50% over 2023 despite the Black Friday outage. The post-outage recovery days (especially Nov 30 with $3,746 in revenue) captured much of the pent-up demand. But Nov 29 itself earned only $699 vs. $1,274 in 2023 -- the outage clearly suppressed that single day. The "cost" is best estimated by comparing what Nov 29 should have earned (projecting from prior years and surrounding days) minus the actual $699, while acknowledging that some of that revenue was merely deferred rather than lost.
+The wider window shows steady growth: +8.6% from 2022 to 2023, then +61.5% from 2023 to 2024. Despite the outage, 2024's holiday window significantly outperformed prior years. The post-outage recovery days (especially Nov 30 with $4,719 in revenue) captured much of the pent-up demand.
+
+But the activity suppression on Black Friday itself is unmistakable. Nov 29 had only 222 total actions versus 324-377 on surrounding days -- roughly 40% below baseline. The outage clearly suppressed that single day. The challenge for the analyst is that raw BF-day revenue ($2,254 in 2024 vs. $752 in 2023) looks *higher*, because business growth masks the loss. To estimate the true cost, you need to project what Nov 29 *should* have earned given the overall growth trend, then subtract the actual $2,254.
 
 Multiple levels of depth:
 
 | Level | What you estimate |
 |-------|--------------|
-| Basic | "2024 Black Friday (Nov 29) revenue was lower than 2023" (directional only) |
-| Moderate | Dollar difference for Nov 29 between 2024 and 2023 ($699 vs $1,274) |
-| Thorough | Growth-adjusted projection: what Nov 29 *should* have earned minus what it did |
-| Exceptional | Wider window analysis showing recovery offset the single-day loss, estimating *net* impact |
+| Basic | Activity on Nov 29 was ~40% below surrounding days (directional) |
+| Moderate | Dollar difference: BF-day avg daily revenue ($2,254) vs. the window's avg daily revenue ($4,460) |
+| Thorough | Growth-adjusted projection: apply the wider window's YoY growth to 2023's BF-day revenue, compare to actual |
+| Exceptional | Wider window analysis showing recovery offset the single-day loss, estimating *net* impact after demand deferral |
 
-The last point is subtle: Exercise 17 showed a post-outage surge (1.4-1.9x baseline in the days following Nov 29). Some of the "lost" Black Friday revenue may have been merely deferred to Nov 30-Dec 2. A complete answer acknowledges this and estimates the *net* loss after accounting for recovery.
+The last point is subtle: Exercise 17 showed a post-outage surge (1.4-1.57x baseline in the days following Nov 29). Nov 30 alone generated $4,719 in revenue, well above the window average. Some of the "lost" Black Friday revenue was merely deferred to Nov 30-Dec 2. A complete answer acknowledges this and estimates the *net* loss after accounting for recovery.
 
 </details>
