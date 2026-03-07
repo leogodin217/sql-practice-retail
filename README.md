@@ -55,12 +55,12 @@ Exercises are in [exercises.md](exercises.md) -- each one includes collapsible h
 
 | Table | Rows | Description |
 |-------|------|-------------|
-| `dim_customer` | 13,314 | Customer dimension (SCD-2) |
+| `dim_customer` | 13,294 | Customer dimension (SCD-2) |
 | `dim_product` | 203 | Product catalog |
 | `dim_infrastructure` | 8 | System status (SCD-2) |
-| `fact_customer_action` | 246,291 | Customer actions (views, carts, purchases) |
+| `fact_customer_action` | 242,618 | Customer actions (views, carts, purchases) |
 
-8,949 distinct customers across nearly three years (Mar 2022 -- Dec 2024). Generated with Fabulexa (My configurable synthetic data generator)
+9,074 distinct customers across nearly three years (Mar 2022 -- Dec 2024). Generated with Fabulexa (My configurable synthetic data generator)
 
 ## Use of AI
 
