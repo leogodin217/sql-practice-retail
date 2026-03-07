@@ -1,10 +1,10 @@
 # SQL Practice: Retail Analytics
 
-23 SQL exercises using a simulated e-commerce dataset (TechMart Electronics). Exercises are framed as real business questions, progressing in difficulty from beginner to intermmediate.  
+22 SQL exercises using a simulated e-commerce dataset (TechMart Electronics). Exercises are framed as real business questions, progressing in difficulty from beginner to intermmediate.  
 
 ## Why? 
 
-Look. Leetcode, Datalemur etc. are great resources, but they leave a gap. With so much focuse on syntax and well defined problems, they don't teach you to analyze a database, think about the bigger picture, or think creatively. In the real world problems come in as vague questions that are often open to interpretation. There isn't always a right answer. At work, we generally interact with one or a few databases over and over. We learn them over time. What we do on the easy stuff gives us more understanding when the harder stuff comes along.  
+Look. Leetcode, Datalemur etc. are great resources, but they leave a gap. With so much focus on syntax and well-defined problems, they don't teach you to analyze a database, think about the bigger picture, or think creatively. In the real world problems come in as vague questions that are often open to interpretation. There isn't always a right answer. At work, we generally interact with one or a few databases over and over. We learn them over time. What we do on the easy stuff gives us more understanding when the harder stuff comes along.  
 
 These practice exercises are framed as business scenarios that require you to make decisions. Define terms. Understand what data could answer the question. And while I do provide potential answers, some have no single right answer. Getting the right answer is less important than the process you use to define the problem and come up with good solutions. 
 
@@ -60,11 +60,11 @@ Exercises are in [exercises.md](exercises.md) -- each one includes collapsible h
 | `dim_infrastructure` | 8 | System status (SCD-2) |
 | `fact_customer_action` | 242,618 | Customer actions (views, carts, purchases) |
 
-9,074 distinct customers across nearly three years (Mar 2022 -- Dec 2024). Generated with Fabulexa (My configurable synthetic data generator)
+9,074 distinct customers across nearly three years (Mar 2022 -- Dec 2024). Generated with Fabulexa (A configurable synthetic data generator)
 
 ## Use of AI
 
-I use LLMs every day. At work. At home. AI is integrated in my workflows and this project is no different.  
+I use LLMs every day. At work. At home. AI is integrated in my workflows and this project is no different. This is how I built these practice exercises.  
 
 1. I used Claude Code to build a configurable synthetic data generator. (Took eight months and many failed experiments)
 2. Used Claude to vet my idea for good practice exercises. Vague questions. Business scenarios. All on the same database. Hints. Etc. 

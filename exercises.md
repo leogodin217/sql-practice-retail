@@ -20,7 +20,7 @@ Some useful commands to get oriented:
 SHOW TABLES;
 
 -- What columns does a table have?
-DESCRIBE table_name;
+DESCRIBE retaildb.main.table_name;
 
 -- What does the data look like?
 SELECT * FROM retaildb.main.dim_customer LIMIT 10;
@@ -37,6 +37,9 @@ Each exercise includes collapsible **Hints**, **Solution**, and **Discussion** s
 Pro Tip: You may want to dump some of your query results into Excel or Sheets then create a chart. Patterns are much easier to see visually. 
 
 Another Pro Tip: Feel free to let an LLM help you when you get stuck. There's nothing wrong with getting help wherever it exists. Just start with a prompt like "I am learning SQL and want a mentor who will teach me how to understand the needed query instead of simply providing an answer." 
+
+DuckDB: You may have never seen casting like timestamp::date. Some DBMS support this and some don't. Don't worry, it's just short for cast(timestamp as date). Probably my favorite convenience that has become more popular in recent years. 
+
 ---
 
 ## Warming Up 
@@ -807,7 +810,7 @@ Customers are distributed across channels (40% organic, 30% paid_search, 20% soc
 
 ---
 
-## Expert
+## This Is Getting Harder 
 
 ### Exercise 13: "Customers browse a lot but don't seem to buy. What's going on?"
 
@@ -1237,8 +1240,6 @@ Follow-up questions to consider:
 </details>
 
 ---
-
-## Intermediate
 
 ### Exercise 18: "Do bigger carts convert better?"
 
